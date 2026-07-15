@@ -1,0 +1,1447 @@
+pools:
+  default:
+    name: 默认高波动池
+    description: 5只高波动成长股, 用于测试多股票逻辑
+    stocks:
+    - ts_code: 300750.SZ
+      name: 宁德时代
+      weight: 0.25
+    - ts_code: 002594.SZ
+      name: 比亚迪
+      weight: 0.2
+    - ts_code: 300059.SZ
+      name: 东方财富
+      weight: 0.2
+    - ts_code: 002475.SZ
+      name: 立讯精密
+      weight: 0.2
+    - ts_code: 000001.SZ
+      name: 平安银行
+      weight: 0.15
+  pe_universe:
+    name: PE选股候选池 (30只多行业分散)
+    description: 覆盖10个行业的30只股票, 用于PE分位数选股策略验证
+    stocks:
+    - ts_code: 000001.SZ
+      name: 平安银行
+      weight: 0.2
+    - ts_code: 600036.SH
+      name: 招商银行
+      weight: 0.2
+    - ts_code: 601398.SH
+      name: 工商银行
+      weight: 0.2
+    - ts_code: 601318.SH
+      name: 中国平安
+      weight: 0.2
+    - ts_code: 300059.SZ
+      name: 东方财富
+      weight: 0.2
+    - ts_code: 600999.SH
+      name: 招商证券
+      weight: 0.2
+    - ts_code: 600519.SH
+      name: 贵州茅台
+      weight: 0.2
+    - ts_code: 000858.SZ
+      name: 五粮液
+      weight: 0.2
+    - ts_code: 002304.SZ
+      name: 洋河股份
+      weight: 0.2
+    - ts_code: 600276.SH
+      name: 恒瑞医药
+      weight: 0.2
+    - ts_code: 000538.SZ
+      name: 云南白药
+      weight: 0.2
+    - ts_code: 300015.SZ
+      name: 爱尔眼科
+      weight: 0.2
+    - ts_code: 300750.SZ
+      name: 宁德时代
+      weight: 0.2
+    - ts_code: 002594.SZ
+      name: 比亚迪
+      weight: 0.2
+    - ts_code: 601012.SH
+      name: 隆基绿能
+      weight: 0.2
+    - ts_code: 600887.SH
+      name: 伊利股份
+      weight: 0.2
+    - ts_code: 000651.SZ
+      name: 格力电器
+      weight: 0.2
+    - ts_code: 600690.SH
+      name: 海尔智家
+      weight: 0.2
+    - ts_code: 002475.SZ
+      name: 立讯精密
+      weight: 0.2
+    - ts_code: 000725.SZ
+      name: 京东方A
+      weight: 0.2
+    - ts_code: 600745.SH
+      name: 闻泰科技
+      weight: 0.2
+    - ts_code: 600028.SH
+      name: 中国石化
+      weight: 0.2
+    - ts_code: 601088.SH
+      name: 中国神华
+      weight: 0.2
+    - ts_code: 600309.SH
+      name: 万华化学
+      weight: 0.2
+    - ts_code: 601668.SH
+      name: 中国建筑
+      weight: 0.2
+    - ts_code: 600048.SH
+      name: 保利发展
+      weight: 0.2
+    - ts_code: 000002.SZ
+      name: 万科A
+      weight: 0.2
+    - ts_code: 600029.SH
+      name: 南方航空
+      weight: 0.2
+    - ts_code: 601111.SH
+      name: 中国国航
+      weight: 0.2
+    - ts_code: 002352.SZ
+      name: 顺丰控股
+      weight: 0.2
+  high_vol:
+    name: 高波动筛选池 (10只)
+    description: 从pe_universe中按年化波动率筛选前10只, 用于验证高波动筛选对MA策略的效果
+    stocks:
+    - ts_code: 600745.SH
+      name: 闻泰科技
+      weight: 0.2
+    - ts_code: 300059.SZ
+      name: 东方财富
+      weight: 0.2
+    - ts_code: 002475.SZ
+      name: 立讯精密
+      weight: 0.2
+    - ts_code: 300750.SZ
+      name: 宁德时代
+      weight: 0.2
+    - ts_code: 300015.SZ
+      name: 爱尔眼科
+      weight: 0.2
+    - ts_code: 601012.SH
+      name: 隆基绿能
+      weight: 0.2
+    - ts_code: 000002.SZ
+      name: 万科A
+      weight: 0.2
+    - ts_code: 600048.SH
+      name: 保利发展
+      weight: 0.2
+    - ts_code: 000725.SZ
+      name: 京东方A
+      weight: 0.2
+    - ts_code: 002594.SZ
+      name: 比亚迪
+      weight: 0.2
+  high_vol_alt:
+    name: '对照池A: 替代高波动池 (10只)'
+    description: 与 high_vol 完全不重叠的 10 只, 验证策略是否对特定股票过拟合
+    stocks:
+    - ts_code: 600309.SH
+      name: 万华化学
+      weight: 0.2
+    - ts_code: 601111.SH
+      name: 中国国航
+      weight: 0.2
+    - ts_code: 600029.SH
+      name: 南方航空
+      weight: 0.2
+    - ts_code: 002352.SZ
+      name: 顺丰控股
+      weight: 0.2
+    - ts_code: 600276.SH
+      name: 恒瑞医药
+      weight: 0.2
+    - ts_code: 000538.SZ
+      name: 云南白药
+      weight: 0.2
+    - ts_code: 600519.SH
+      name: 贵州茅台
+      weight: 0.2
+    - ts_code: 000858.SZ
+      name: 五粮液
+      weight: 0.2
+    - ts_code: 600999.SH
+      name: 招商证券
+      weight: 0.2
+    - ts_code: 002304.SZ
+      name: 洋河股份
+      weight: 0.2
+  high_vol_mix:
+    name: '对照池B: 混合高波动池 (10只)'
+    description: 保留 high_vol 的一半, 换入 5 只新股票, 验证部分替换的稳健性
+    stocks:
+    - ts_code: 300750.SZ
+      name: 宁德时代
+      weight: 0.2
+    - ts_code: 002594.SZ
+      name: 比亚迪
+      weight: 0.2
+    - ts_code: 002475.SZ
+      name: 立讯精密
+      weight: 0.2
+    - ts_code: 300059.SZ
+      name: 东方财富
+      weight: 0.2
+    - ts_code: 300015.SZ
+      name: 爱尔眼科
+      weight: 0.2
+    - ts_code: 600309.SH
+      name: 万华化学
+      weight: 0.2
+    - ts_code: 600276.SH
+      name: 恒瑞医药
+      weight: 0.2
+    - ts_code: 000858.SZ
+      name: 五粮液
+      weight: 0.2
+    - ts_code: 600999.SH
+      name: 招商证券
+      weight: 0.2
+    - ts_code: 601111.SH
+      name: 中国国航
+      weight: 0.2
+  conservative:
+    name: 保守蓝筹池
+    description: 低波动大盘股
+    stocks:
+    - ts_code: 000001.SZ
+      name: 平安银行
+      weight: 0.3
+    - ts_code: 600036.SH
+      name: 招商银行
+      weight: 0.3
+    - ts_code: 601318.SH
+      name: 中国平安
+      weight: 0.4
+  mini:
+    name: 最小验证池
+    description: 用已有数据的2只股票验证多股票逻辑, 无需联网
+    stocks:
+    - ts_code: 300750.SZ
+      name: 宁德时代
+      weight: 0.6
+    - ts_code: 000001.SZ
+      name: 平安银行
+      weight: 0.4
+  csi100:
+    name: 沪深300前100只大盘股
+    description: 从沪深300成分股中按市值取前100只, 用于事前波动率筛选验证
+    stocks:
+    - ts_code: 000001.SZ
+      name: 平安银行
+      weight: 0.2
+    - ts_code: 000002.SZ
+      name: 万科A
+      weight: 0.2
+    - ts_code: 000063.SZ
+      name: 中兴通讯
+      weight: 0.2
+    - ts_code: 000100.SZ
+      name: TCL科技
+      weight: 0.2
+    - ts_code: 000157.SZ
+      name: 中联重科
+      weight: 0.2
+    - ts_code: 000166.SZ
+      name: 申万宏源
+      weight: 0.2
+    - ts_code: 000301.SZ
+      name: 东方盛虹
+      weight: 0.2
+    - ts_code: 000333.SZ
+      name: 美的集团
+      weight: 0.2
+    - ts_code: 000338.SZ
+      name: 潍柴动力
+      weight: 0.2
+    - ts_code: 000408.SZ
+      name: 藏格矿业
+      weight: 0.2
+    - ts_code: 000425.SZ
+      name: 徐工机械
+      weight: 0.2
+    - ts_code: 000538.SZ
+      name: 云南白药
+      weight: 0.2
+    - ts_code: 000568.SZ
+      name: 泸州老窖
+      weight: 0.2
+    - ts_code: 000596.SZ
+      name: 古井贡酒
+      weight: 0.2
+    - ts_code: 000617.SZ
+      name: 中油资本
+      weight: 0.2
+    - ts_code: 000625.SZ
+      name: 长安汽车
+      weight: 0.2
+    - ts_code: 000630.SZ
+      name: 铜陵有色
+      weight: 0.2
+    - ts_code: 000651.SZ
+      name: 格力电器
+      weight: 0.2
+    - ts_code: 000657.SZ
+      name: 中钨高新
+      weight: 0.2
+    - ts_code: 000708.SZ
+      name: 中信特钢
+      weight: 0.2
+    - ts_code: 000725.SZ
+      name: 京东方A
+      weight: 0.2
+    - ts_code: 000768.SZ
+      name: 中航西飞
+      weight: 0.2
+    - ts_code: 000776.SZ
+      name: 广发证券
+      weight: 0.2
+    - ts_code: 000792.SZ
+      name: 盐湖股份
+      weight: 0.2
+    - ts_code: 000807.SZ
+      name: 云铝股份
+      weight: 0.2
+    - ts_code: 000858.SZ
+      name: 五 粮 液
+      weight: 0.2
+    - ts_code: 000895.SZ
+      name: 双汇发展
+      weight: 0.2
+    - ts_code: 000938.SZ
+      name: 紫光股份
+      weight: 0.2
+    - ts_code: 000963.SZ
+      name: 华东医药
+      weight: 0.2
+    - ts_code: 000975.SZ
+      name: 山金国际
+      weight: 0.2
+    - ts_code: 000977.SZ
+      name: 浪潮信息
+      weight: 0.2
+    - ts_code: 000988.SZ
+      name: 华工科技
+      weight: 0.2
+    - ts_code: 000999.SZ
+      name: 华润三九
+      weight: 0.2
+    - ts_code: 001280.SZ
+      name: 中国铀业
+      weight: 0.2
+    - ts_code: 001391.SZ
+      name: 国货航
+      weight: 0.2
+    - ts_code: 001965.SZ
+      name: 招商公路
+      weight: 0.2
+    - ts_code: 001979.SZ
+      name: 招商蛇口
+      weight: 0.2
+    - ts_code: 002001.SZ
+      name: 新和成
+      weight: 0.2
+    - ts_code: 002027.SZ
+      name: 分众传媒
+      weight: 0.2
+    - ts_code: 002028.SZ
+      name: 思源电气
+      weight: 0.2
+    - ts_code: 002049.SZ
+      name: 紫光国微
+      weight: 0.2
+    - ts_code: 002050.SZ
+      name: 三花智控
+      weight: 0.2
+    - ts_code: 002074.SZ
+      name: 国轩高科
+      weight: 0.2
+    - ts_code: 002142.SZ
+      name: 宁波银行
+      weight: 0.2
+    - ts_code: 002179.SZ
+      name: 中航光电
+      weight: 0.2
+    - ts_code: 002202.SZ
+      name: 金风科技
+      weight: 0.2
+    - ts_code: 002230.SZ
+      name: 科大讯飞
+      weight: 0.2
+    - ts_code: 002236.SZ
+      name: 大华股份
+      weight: 0.2
+    - ts_code: 002241.SZ
+      name: 歌尔股份
+      weight: 0.2
+    - ts_code: 002304.SZ
+      name: 洋河股份
+      weight: 0.2
+    - ts_code: 002311.SZ
+      name: 海大集团
+      weight: 0.2
+    - ts_code: 002352.SZ
+      name: 顺丰控股
+      weight: 0.2
+    - ts_code: 002353.SZ
+      name: 杰瑞股份
+      weight: 0.2
+    - ts_code: 002371.SZ
+      name: 北方华创
+      weight: 0.2
+    - ts_code: 002384.SZ
+      name: 东山精密
+      weight: 0.2
+    - ts_code: 002415.SZ
+      name: 海康威视
+      weight: 0.2
+    - ts_code: 002422.SZ
+      name: 科伦药业
+      weight: 0.2
+    - ts_code: 002460.SZ
+      name: 赣锋锂业
+      weight: 0.2
+    - ts_code: 002463.SZ
+      name: 沪电股份
+      weight: 0.2
+    - ts_code: 002466.SZ
+      name: 天齐锂业
+      weight: 0.2
+    - ts_code: 002475.SZ
+      name: 立讯精密
+      weight: 0.2
+    - ts_code: 002493.SZ
+      name: 荣盛石化
+      weight: 0.2
+    - ts_code: 002532.SZ
+      name: 天山铝业
+      weight: 0.2
+    - ts_code: 002558.SZ
+      name: 巨人网络
+      weight: 0.2
+    - ts_code: 002594.SZ
+      name: 比亚迪
+      weight: 0.2
+    - ts_code: 002600.SZ
+      name: 领益智造
+      weight: 0.2
+    - ts_code: 002602.SZ
+      name: 世纪华通
+      weight: 0.2
+    - ts_code: 002625.SZ
+      name: 光启技术
+      weight: 0.2
+    - ts_code: 002648.SZ
+      name: 卫星化学
+      weight: 0.2
+    - ts_code: 002709.SZ
+      name: 天赐材料
+      weight: 0.2
+    - ts_code: 002714.SZ
+      name: 牧原股份
+      weight: 0.2
+    - ts_code: 002736.SZ
+      name: 国信证券
+      weight: 0.2
+    - ts_code: 002837.SZ
+      name: 英维克
+      weight: 0.2
+    - ts_code: 002916.SZ
+      name: 深南电路
+      weight: 0.2
+    - ts_code: 002920.SZ
+      name: 德赛西威
+      weight: 0.2
+    - ts_code: 002938.SZ
+      name: 鹏鼎控股
+      weight: 0.2
+    - ts_code: 003816.SZ
+      name: 中国广核
+      weight: 0.2
+    - ts_code: 300014.SZ
+      name: 亿纬锂能
+      weight: 0.2
+    - ts_code: 300015.SZ
+      name: 爱尔眼科
+      weight: 0.2
+    - ts_code: 300033.SZ
+      name: 同花顺
+      weight: 0.2
+    - ts_code: 300059.SZ
+      name: 东方财富
+      weight: 0.2
+    - ts_code: 300122.SZ
+      name: 智飞生物
+      weight: 0.2
+    - ts_code: 300124.SZ
+      name: 汇川技术
+      weight: 0.2
+    - ts_code: 300251.SZ
+      name: 光线传媒
+      weight: 0.2
+    - ts_code: 300274.SZ
+      name: 阳光电源
+      weight: 0.2
+    - ts_code: 300308.SZ
+      name: 中际旭创
+      weight: 0.2
+    - ts_code: 300316.SZ
+      name: 晶盛机电
+      weight: 0.2
+    - ts_code: 300394.SZ
+      name: 天孚通信
+      weight: 0.2
+    - ts_code: 300408.SZ
+      name: 三环集团
+      weight: 0.2
+    - ts_code: 300413.SZ
+      name: 芒果超媒
+      weight: 0.2
+    - ts_code: 300418.SZ
+      name: 昆仑万维
+      weight: 0.2
+    - ts_code: 300433.SZ
+      name: 蓝思科技
+      weight: 0.2
+    - ts_code: 300442.SZ
+      name: 润泽科技
+      weight: 0.2
+    - ts_code: 300450.SZ
+      name: 先导智能
+      weight: 0.2
+    - ts_code: 300476.SZ
+      name: 胜宏科技
+      weight: 0.2
+    - ts_code: 300498.SZ
+      name: 温氏股份
+      weight: 0.2
+    - ts_code: 300502.SZ
+      name: 新易盛
+      weight: 0.2
+    - ts_code: 300628.SZ
+      name: 亿联网络
+      weight: 0.2
+    - ts_code: 300661.SZ
+      name: 圣邦股份
+      weight: 0.2
+    - ts_code: 300750.SZ
+      name: 宁德时代
+      weight: 0.2
+  csi300:
+    name: 沪深300全部成分股
+    description: 沪深300全部成分股, 用于事前波动率筛选验证
+    stocks:
+    - ts_code: 000001.SZ
+      name: 平安银行
+      weight: 0.2
+    - ts_code: 000002.SZ
+      name: 万科A
+      weight: 0.2
+    - ts_code: 000063.SZ
+      name: 中兴通讯
+      weight: 0.2
+    - ts_code: 000100.SZ
+      name: TCL科技
+      weight: 0.2
+    - ts_code: 000157.SZ
+      name: 中联重科
+      weight: 0.2
+    - ts_code: 000166.SZ
+      name: 申万宏源
+      weight: 0.2
+    - ts_code: 000301.SZ
+      name: 东方盛虹
+      weight: 0.2
+    - ts_code: 000333.SZ
+      name: 美的集团
+      weight: 0.2
+    - ts_code: 000338.SZ
+      name: 潍柴动力
+      weight: 0.2
+    - ts_code: 000408.SZ
+      name: 藏格矿业
+      weight: 0.2
+    - ts_code: 000425.SZ
+      name: 徐工机械
+      weight: 0.2
+    - ts_code: 000538.SZ
+      name: 云南白药
+      weight: 0.2
+    - ts_code: 000568.SZ
+      name: 泸州老窖
+      weight: 0.2
+    - ts_code: 000596.SZ
+      name: 古井贡酒
+      weight: 0.2
+    - ts_code: 000617.SZ
+      name: 中油资本
+      weight: 0.2
+    - ts_code: 000625.SZ
+      name: 长安汽车
+      weight: 0.2
+    - ts_code: 000630.SZ
+      name: 铜陵有色
+      weight: 0.2
+    - ts_code: 000651.SZ
+      name: 格力电器
+      weight: 0.2
+    - ts_code: 000657.SZ
+      name: 中钨高新
+      weight: 0.2
+    - ts_code: 000708.SZ
+      name: 中信特钢
+      weight: 0.2
+    - ts_code: 000725.SZ
+      name: 京东方A
+      weight: 0.2
+    - ts_code: 000768.SZ
+      name: 中航西飞
+      weight: 0.2
+    - ts_code: 000776.SZ
+      name: 广发证券
+      weight: 0.2
+    - ts_code: 000792.SZ
+      name: 盐湖股份
+      weight: 0.2
+    - ts_code: 000807.SZ
+      name: 云铝股份
+      weight: 0.2
+    - ts_code: 000858.SZ
+      name: 五 粮 液
+      weight: 0.2
+    - ts_code: 000895.SZ
+      name: 双汇发展
+      weight: 0.2
+    - ts_code: 000938.SZ
+      name: 紫光股份
+      weight: 0.2
+    - ts_code: 000963.SZ
+      name: 华东医药
+      weight: 0.2
+    - ts_code: 000975.SZ
+      name: 山金国际
+      weight: 0.2
+    - ts_code: 000977.SZ
+      name: 浪潮信息
+      weight: 0.2
+    - ts_code: 000988.SZ
+      name: 华工科技
+      weight: 0.2
+    - ts_code: 000999.SZ
+      name: 华润三九
+      weight: 0.2
+    - ts_code: 001280.SZ
+      name: 中国铀业
+      weight: 0.2
+    - ts_code: 001391.SZ
+      name: 国货航
+      weight: 0.2
+    - ts_code: 001965.SZ
+      name: 招商公路
+      weight: 0.2
+    - ts_code: 001979.SZ
+      name: 招商蛇口
+      weight: 0.2
+    - ts_code: 002001.SZ
+      name: 新和成
+      weight: 0.2
+    - ts_code: 002027.SZ
+      name: 分众传媒
+      weight: 0.2
+    - ts_code: 002028.SZ
+      name: 思源电气
+      weight: 0.2
+    - ts_code: 002049.SZ
+      name: 紫光国微
+      weight: 0.2
+    - ts_code: 002050.SZ
+      name: 三花智控
+      weight: 0.2
+    - ts_code: 002074.SZ
+      name: 国轩高科
+      weight: 0.2
+    - ts_code: 002142.SZ
+      name: 宁波银行
+      weight: 0.2
+    - ts_code: 002179.SZ
+      name: 中航光电
+      weight: 0.2
+    - ts_code: 002202.SZ
+      name: 金风科技
+      weight: 0.2
+    - ts_code: 002230.SZ
+      name: 科大讯飞
+      weight: 0.2
+    - ts_code: 002236.SZ
+      name: 大华股份
+      weight: 0.2
+    - ts_code: 002241.SZ
+      name: 歌尔股份
+      weight: 0.2
+    - ts_code: 002304.SZ
+      name: 洋河股份
+      weight: 0.2
+    - ts_code: 002311.SZ
+      name: 海大集团
+      weight: 0.2
+    - ts_code: 002352.SZ
+      name: 顺丰控股
+      weight: 0.2
+    - ts_code: 002353.SZ
+      name: 杰瑞股份
+      weight: 0.2
+    - ts_code: 002371.SZ
+      name: 北方华创
+      weight: 0.2
+    - ts_code: 002384.SZ
+      name: 东山精密
+      weight: 0.2
+    - ts_code: 002415.SZ
+      name: 海康威视
+      weight: 0.2
+    - ts_code: 002422.SZ
+      name: 科伦药业
+      weight: 0.2
+    - ts_code: 002460.SZ
+      name: 赣锋锂业
+      weight: 0.2
+    - ts_code: 002463.SZ
+      name: 沪电股份
+      weight: 0.2
+    - ts_code: 002466.SZ
+      name: 天齐锂业
+      weight: 0.2
+    - ts_code: 002475.SZ
+      name: 立讯精密
+      weight: 0.2
+    - ts_code: 002493.SZ
+      name: 荣盛石化
+      weight: 0.2
+    - ts_code: 002532.SZ
+      name: 天山铝业
+      weight: 0.2
+    - ts_code: 002558.SZ
+      name: 巨人网络
+      weight: 0.2
+    - ts_code: 002594.SZ
+      name: 比亚迪
+      weight: 0.2
+    - ts_code: 002600.SZ
+      name: 领益智造
+      weight: 0.2
+    - ts_code: 002602.SZ
+      name: 世纪华通
+      weight: 0.2
+    - ts_code: 002625.SZ
+      name: 光启技术
+      weight: 0.2
+    - ts_code: 002648.SZ
+      name: 卫星化学
+      weight: 0.2
+    - ts_code: 002709.SZ
+      name: 天赐材料
+      weight: 0.2
+    - ts_code: 002714.SZ
+      name: 牧原股份
+      weight: 0.2
+    - ts_code: 002736.SZ
+      name: 国信证券
+      weight: 0.2
+    - ts_code: 002837.SZ
+      name: 英维克
+      weight: 0.2
+    - ts_code: 002916.SZ
+      name: 深南电路
+      weight: 0.2
+    - ts_code: 002920.SZ
+      name: 德赛西威
+      weight: 0.2
+    - ts_code: 002938.SZ
+      name: 鹏鼎控股
+      weight: 0.2
+    - ts_code: 003816.SZ
+      name: 中国广核
+      weight: 0.2
+    - ts_code: 300014.SZ
+      name: 亿纬锂能
+      weight: 0.2
+    - ts_code: 300015.SZ
+      name: 爱尔眼科
+      weight: 0.2
+    - ts_code: 300033.SZ
+      name: 同花顺
+      weight: 0.2
+    - ts_code: 300059.SZ
+      name: 东方财富
+      weight: 0.2
+    - ts_code: 300122.SZ
+      name: 智飞生物
+      weight: 0.2
+    - ts_code: 300124.SZ
+      name: 汇川技术
+      weight: 0.2
+    - ts_code: 300251.SZ
+      name: 光线传媒
+      weight: 0.2
+    - ts_code: 300274.SZ
+      name: 阳光电源
+      weight: 0.2
+    - ts_code: 300308.SZ
+      name: 中际旭创
+      weight: 0.2
+    - ts_code: 300316.SZ
+      name: 晶盛机电
+      weight: 0.2
+    - ts_code: 300394.SZ
+      name: 天孚通信
+      weight: 0.2
+    - ts_code: 300408.SZ
+      name: 三环集团
+      weight: 0.2
+    - ts_code: 300413.SZ
+      name: 芒果超媒
+      weight: 0.2
+    - ts_code: 300418.SZ
+      name: 昆仑万维
+      weight: 0.2
+    - ts_code: 300433.SZ
+      name: 蓝思科技
+      weight: 0.2
+    - ts_code: 300442.SZ
+      name: 润泽科技
+      weight: 0.2
+    - ts_code: 300450.SZ
+      name: 先导智能
+      weight: 0.2
+    - ts_code: 300476.SZ
+      name: 胜宏科技
+      weight: 0.2
+    - ts_code: 300498.SZ
+      name: 温氏股份
+      weight: 0.2
+    - ts_code: 300502.SZ
+      name: 新易盛
+      weight: 0.2
+    - ts_code: 300628.SZ
+      name: 亿联网络
+      weight: 0.2
+    - ts_code: 300661.SZ
+      name: 圣邦股份
+      weight: 0.2
+    - ts_code: 300750.SZ
+      name: 宁德时代
+      weight: 0.2
+    - ts_code: 300760.SZ
+      name: 迈瑞医疗
+      weight: 0.2
+    - ts_code: 300803.SZ
+      name: 指南针
+      weight: 0.2
+    - ts_code: 300832.SZ
+      name: 新产业
+      weight: 0.2
+    - ts_code: 300866.SZ
+      name: 安克创新
+      weight: 0.2
+    - ts_code: 300896.SZ
+      name: 爱美客
+      weight: 0.2
+    - ts_code: 300999.SZ
+      name: 金龙鱼
+      weight: 0.2
+    - ts_code: 301165.SZ
+      name: 锐捷网络
+      weight: 0.2
+    - ts_code: 301236.SZ
+      name: 软通动力
+      weight: 0.2
+    - ts_code: 301269.SZ
+      name: 华大九天
+      weight: 0.2
+    - ts_code: 301308.SZ
+      name: 江波龙
+      weight: 0.2
+    - ts_code: 302132.SZ
+      name: 中航成飞
+      weight: 0.2
+    - ts_code: 600000.SH
+      name: 浦发银行
+      weight: 0.2
+    - ts_code: 600009.SH
+      name: 上海机场
+      weight: 0.2
+    - ts_code: 600010.SH
+      name: 包钢股份
+      weight: 0.2
+    - ts_code: 600011.SH
+      name: 华能国际
+      weight: 0.2
+    - ts_code: 600015.SH
+      name: 华夏银行
+      weight: 0.2
+    - ts_code: 600016.SH
+      name: 民生银行
+      weight: 0.2
+    - ts_code: 600018.SH
+      name: 上港集团
+      weight: 0.2
+    - ts_code: 600019.SH
+      name: 宝钢股份
+      weight: 0.2
+    - ts_code: 600023.SH
+      name: 浙能电力
+      weight: 0.2
+    - ts_code: 600025.SH
+      name: 华能水电
+      weight: 0.2
+    - ts_code: 600026.SH
+      name: 中远海能
+      weight: 0.2
+    - ts_code: 600027.SH
+      name: 华电国际
+      weight: 0.2
+    - ts_code: 600028.SH
+      name: 中国石化
+      weight: 0.2
+    - ts_code: 600029.SH
+      name: 南方航空
+      weight: 0.2
+    - ts_code: 600030.SH
+      name: 中信证券
+      weight: 0.2
+    - ts_code: 600031.SH
+      name: 三一重工
+      weight: 0.2
+    - ts_code: 600036.SH
+      name: 招商银行
+      weight: 0.2
+    - ts_code: 600039.SH
+      name: 四川路桥
+      weight: 0.2
+    - ts_code: 600048.SH
+      name: 保利发展
+      weight: 0.2
+    - ts_code: 600050.SH
+      name: 中国联通
+      weight: 0.2
+    - ts_code: 600061.SH
+      name: 国投资本
+      weight: 0.2
+    - ts_code: 600066.SH
+      name: 宇通客车
+      weight: 0.2
+    - ts_code: 600085.SH
+      name: 同仁堂
+      weight: 0.2
+    - ts_code: 600089.SH
+      name: 特变电工
+      weight: 0.2
+    - ts_code: 600104.SH
+      name: 上汽集团
+      weight: 0.2
+    - ts_code: 600111.SH
+      name: 北方稀土
+      weight: 0.2
+    - ts_code: 600115.SH
+      name: 中国东航
+      weight: 0.2
+    - ts_code: 600118.SH
+      name: 中国卫星
+      weight: 0.2
+    - ts_code: 600150.SH
+      name: 中国船舶
+      weight: 0.2
+    - ts_code: 600160.SH
+      name: 巨化股份
+      weight: 0.2
+    - ts_code: 600176.SH
+      name: 中国巨石
+      weight: 0.2
+    - ts_code: 600183.SH
+      name: 生益科技
+      weight: 0.2
+    - ts_code: 600188.SH
+      name: 兖矿能源
+      weight: 0.2
+    - ts_code: 600196.SH
+      name: 复星医药
+      weight: 0.2
+    - ts_code: 600219.SH
+      name: 南山铝业
+      weight: 0.2
+    - ts_code: 600221.SH
+      name: 海航控股
+      weight: 0.2
+    - ts_code: 600233.SH
+      name: 圆通速递
+      weight: 0.2
+    - ts_code: 600276.SH
+      name: 恒瑞医药
+      weight: 0.2
+    - ts_code: 600309.SH
+      name: 万华化学
+      weight: 0.2
+    - ts_code: 600346.SH
+      name: 恒力石化
+      weight: 0.2
+    - ts_code: 600362.SH
+      name: 江西铜业
+      weight: 0.2
+    - ts_code: 600372.SH
+      name: 中航机载
+      weight: 0.2
+    - ts_code: 600406.SH
+      name: 国电南瑞
+      weight: 0.2
+    - ts_code: 600415.SH
+      name: 小商品城
+      weight: 0.2
+    - ts_code: 600426.SH
+      name: 华鲁恒升
+      weight: 0.2
+    - ts_code: 600436.SH
+      name: 片仔癀
+      weight: 0.2
+    - ts_code: 600438.SH
+      name: 通威股份
+      weight: 0.2
+    - ts_code: 600460.SH
+      name: 士兰微
+      weight: 0.2
+    - ts_code: 600482.SH
+      name: 中国动力
+      weight: 0.2
+    - ts_code: 600489.SH
+      name: 中金黄金
+      weight: 0.2
+    - ts_code: 600515.SH
+      name: 海南机场
+      weight: 0.2
+    - ts_code: 600519.SH
+      name: 贵州茅台
+      weight: 0.2
+    - ts_code: 600522.SH
+      name: 中天科技
+      weight: 0.2
+    - ts_code: 600547.SH
+      name: 山东黄金
+      weight: 0.2
+    - ts_code: 600549.SH
+      name: 厦门钨业
+      weight: 0.2
+    - ts_code: 600570.SH
+      name: 恒生电子
+      weight: 0.2
+    - ts_code: 600584.SH
+      name: 长电科技
+      weight: 0.2
+    - ts_code: 600585.SH
+      name: 海螺水泥
+      weight: 0.2
+    - ts_code: 600588.SH
+      name: 用友网络
+      weight: 0.2
+    - ts_code: 600600.SH
+      name: 青岛啤酒
+      weight: 0.2
+    - ts_code: 600660.SH
+      name: 福耀玻璃
+      weight: 0.2
+    - ts_code: 600674.SH
+      name: 川投能源
+      weight: 0.2
+    - ts_code: 600690.SH
+      name: 海尔智家
+      weight: 0.2
+    - ts_code: 600741.SH
+      name: 华域汽车
+      weight: 0.2
+    - ts_code: 600760.SH
+      name: 中航沈飞
+      weight: 0.2
+    - ts_code: 600795.SH
+      name: 国电电力
+      weight: 0.2
+    - ts_code: 600803.SH
+      name: 新奥股份
+      weight: 0.2
+    - ts_code: 600809.SH
+      name: 山西汾酒
+      weight: 0.2
+    - ts_code: 600845.SH
+      name: 宝信软件
+      weight: 0.2
+    - ts_code: 600875.SH
+      name: 东方电气
+      weight: 0.2
+    - ts_code: 600886.SH
+      name: 国投电力
+      weight: 0.2
+    - ts_code: 600887.SH
+      name: 伊利股份
+      weight: 0.2
+    - ts_code: 600893.SH
+      name: 航发动力
+      weight: 0.2
+    - ts_code: 600900.SH
+      name: 长江电力
+      weight: 0.2
+    - ts_code: 600905.SH
+      name: 三峡能源
+      weight: 0.2
+    - ts_code: 600918.SH
+      name: 中泰证券
+      weight: 0.2
+    - ts_code: 600919.SH
+      name: 江苏银行
+      weight: 0.2
+    - ts_code: 600926.SH
+      name: 杭州银行
+      weight: 0.2
+    - ts_code: 600930.SH
+      name: 华电新能
+      weight: 0.2
+    - ts_code: 600938.SH
+      name: 中国海油
+      weight: 0.2
+    - ts_code: 600941.SH
+      name: 中国移动
+      weight: 0.2
+    - ts_code: 600958.SH
+      name: 东方证券
+      weight: 0.2
+    - ts_code: 600989.SH
+      name: 宝丰能源
+      weight: 0.2
+    - ts_code: 600999.SH
+      name: 招商证券
+      weight: 0.2
+    - ts_code: 601006.SH
+      name: 大秦铁路
+      weight: 0.2
+    - ts_code: 601009.SH
+      name: 南京银行
+      weight: 0.2
+    - ts_code: 601012.SH
+      name: 隆基绿能
+      weight: 0.2
+    - ts_code: 601018.SH
+      name: 宁波港
+      weight: 0.2
+    - ts_code: 601021.SH
+      name: 春秋航空
+      weight: 0.2
+    - ts_code: 601058.SH
+      name: 赛轮轮胎
+      weight: 0.2
+    - ts_code: 601059.SH
+      name: 信达证券
+      weight: 0.2
+    - ts_code: 601066.SH
+      name: 中信建投
+      weight: 0.2
+    - ts_code: 601077.SH
+      name: 渝农商行
+      weight: 0.2
+    - ts_code: 601088.SH
+      name: 中国神华
+      weight: 0.2
+    - ts_code: 601100.SH
+      name: 恒立液压
+      weight: 0.2
+    - ts_code: 601111.SH
+      name: 中国国航
+      weight: 0.2
+    - ts_code: 601117.SH
+      name: 中国化学
+      weight: 0.2
+    - ts_code: 601127.SH
+      name: 赛力斯
+      weight: 0.2
+    - ts_code: 601136.SH
+      name: 首创证券
+      weight: 0.2
+    - ts_code: 601138.SH
+      name: 工业富联
+      weight: 0.2
+    - ts_code: 601166.SH
+      name: 兴业银行
+      weight: 0.2
+    - ts_code: 601169.SH
+      name: 北京银行
+      weight: 0.2
+    - ts_code: 601186.SH
+      name: 中国铁建
+      weight: 0.2
+    - ts_code: 601211.SH
+      name: 国泰海通
+      weight: 0.2
+    - ts_code: 601225.SH
+      name: 陕西煤业
+      weight: 0.2
+    - ts_code: 601229.SH
+      name: 上海银行
+      weight: 0.2
+    - ts_code: 601238.SH
+      name: 广汽集团
+      weight: 0.2
+    - ts_code: 601288.SH
+      name: 农业银行
+      weight: 0.2
+    - ts_code: 601318.SH
+      name: 中国平安
+      weight: 0.2
+    - ts_code: 601319.SH
+      name: 中国人保
+      weight: 0.2
+    - ts_code: 601328.SH
+      name: 交通银行
+      weight: 0.2
+    - ts_code: 601336.SH
+      name: 新华保险
+      weight: 0.2
+    - ts_code: 601360.SH
+      name: 三六零
+      weight: 0.2
+    - ts_code: 601377.SH
+      name: 兴业证券
+      weight: 0.2
+    - ts_code: 601390.SH
+      name: 中国中铁
+      weight: 0.2
+    - ts_code: 601398.SH
+      name: 工商银行
+      weight: 0.2
+    - ts_code: 601456.SH
+      name: 国联民生
+      weight: 0.2
+    - ts_code: 601600.SH
+      name: 中国铝业
+      weight: 0.2
+    - ts_code: 601601.SH
+      name: 中国太保
+      weight: 0.2
+    - ts_code: 601607.SH
+      name: 上海医药
+      weight: 0.2
+    - ts_code: 601618.SH
+      name: 中国中冶
+      weight: 0.2
+    - ts_code: 601628.SH
+      name: 中国人寿
+      weight: 0.2
+    - ts_code: 601633.SH
+      name: 长城汽车
+      weight: 0.2
+    - ts_code: 601658.SH
+      name: 邮储银行
+      weight: 0.2
+    - ts_code: 601668.SH
+      name: 中国建筑
+      weight: 0.2
+    - ts_code: 601669.SH
+      name: 中国电建
+      weight: 0.2
+    - ts_code: 601688.SH
+      name: 华泰证券
+      weight: 0.2
+    - ts_code: 601689.SH
+      name: 拓普集团
+      weight: 0.2
+    - ts_code: 601698.SH
+      name: 中国卫通
+      weight: 0.2
+    - ts_code: 601727.SH
+      name: 上海电气
+      weight: 0.2
+    - ts_code: 601728.SH
+      name: 中国电信
+      weight: 0.2
+    - ts_code: 601766.SH
+      name: 中国中车
+      weight: 0.2
+    - ts_code: 601788.SH
+      name: 光大证券
+      weight: 0.2
+    - ts_code: 601800.SH
+      name: 中国交建
+      weight: 0.2
+    - ts_code: 601816.SH
+      name: 京沪高铁
+      weight: 0.2
+    - ts_code: 601818.SH
+      name: 光大银行
+      weight: 0.2
+    - ts_code: 601825.SH
+      name: 沪农商行
+      weight: 0.2
+    - ts_code: 601838.SH
+      name: 成都银行
+      weight: 0.2
+    - ts_code: 601857.SH
+      name: 中国石油
+      weight: 0.2
+    - ts_code: 601868.SH
+      name: 中国能建
+      weight: 0.2
+    - ts_code: 601872.SH
+      name: 招商轮船
+      weight: 0.2
+    - ts_code: 601877.SH
+      name: 正泰电器
+      weight: 0.2
+    - ts_code: 601878.SH
+      name: 浙商证券
+      weight: 0.2
+    - ts_code: 601881.SH
+      name: 中国银河
+      weight: 0.2
+    - ts_code: 601888.SH
+      name: 中国中免
+      weight: 0.2
+    - ts_code: 601898.SH
+      name: 中煤能源
+      weight: 0.2
+    - ts_code: 601899.SH
+      name: 紫金矿业
+      weight: 0.2
+    - ts_code: 601901.SH
+      name: 方正证券
+      weight: 0.2
+    - ts_code: 601916.SH
+      name: 浙商银行
+      weight: 0.2
+    - ts_code: 601919.SH
+      name: 中远海控
+      weight: 0.2
+    - ts_code: 601939.SH
+      name: 建设银行
+      weight: 0.2
+    - ts_code: 601985.SH
+      name: 中国核电
+      weight: 0.2
+    - ts_code: 601988.SH
+      name: 中国银行
+      weight: 0.2
+    - ts_code: 601995.SH
+      name: 中金公司
+      weight: 0.2
+    - ts_code: 601998.SH
+      name: 中信银行
+      weight: 0.2
+    - ts_code: 603019.SH
+      name: 中科曙光
+      weight: 0.2
+    - ts_code: 603259.SH
+      name: 药明康德
+      weight: 0.2
+    - ts_code: 603260.SH
+      name: 合盛硅业
+      weight: 0.2
+    - ts_code: 603288.SH
+      name: 海天味业
+      weight: 0.2
+    - ts_code: 603296.SH
+      name: 华勤技术
+      weight: 0.2
+    - ts_code: 603369.SH
+      name: 今世缘
+      weight: 0.2
+    - ts_code: 603392.SH
+      name: 万泰生物
+      weight: 0.2
+    - ts_code: 603501.SH
+      name: 豪威集团
+      weight: 0.2
+    - ts_code: 603799.SH
+      name: 华友钴业
+      weight: 0.2
+    - ts_code: 603893.SH
+      name: 瑞芯微
+      weight: 0.2
+    - ts_code: 603986.SH
+      name: 兆易创新
+      weight: 0.2
+    - ts_code: 603993.SH
+      name: 洛阳钼业
+      weight: 0.2
+    - ts_code: 605117.SH
+      name: 德业股份
+      weight: 0.2
+    - ts_code: 605499.SH
+      name: 东鹏饮料
+      weight: 0.2
+    - ts_code: 688008.SH
+      name: 澜起科技
+      weight: 0.2
+    - ts_code: 688009.SH
+      name: 中国通号
+      weight: 0.2
+    - ts_code: 688012.SH
+      name: 中微公司
+      weight: 0.2
+    - ts_code: 688036.SH
+      name: 传音控股
+      weight: 0.2
+    - ts_code: 688041.SH
+      name: 海光信息
+      weight: 0.2
+    - ts_code: 688047.SH
+      name: 龙芯中科
+      weight: 0.2
+    - ts_code: 688072.SH
+      name: 拓荆科技
+      weight: 0.2
+    - ts_code: 688082.SH
+      name: 盛美上海
+      weight: 0.2
+    - ts_code: 688111.SH
+      name: 金山办公
+      weight: 0.2
+    - ts_code: 688126.SH
+      name: 沪硅产业
+      weight: 0.2
+    - ts_code: 688183.SH
+      name: 生益电子
+      weight: 0.2
+    - ts_code: 688223.SH
+      name: 晶科能源
+      weight: 0.2
+    - ts_code: 688256.SH
+      name: 寒武纪
+      weight: 0.2
+    - ts_code: 688271.SH
+      name: 联影医疗
+      weight: 0.2
+    - ts_code: 688303.SH
+      name: 大全能源
+      weight: 0.2
+    - ts_code: 688396.SH
+      name: 华润微
+      weight: 0.2
+    - ts_code: 688472.SH
+      name: 阿特斯
+      weight: 0.2
+    - ts_code: 688506.SH
+      name: 百利天恒
+      weight: 0.2
+    - ts_code: 688521.SH
+      name: 芯原股份
+      weight: 0.2
+    - ts_code: 688981.SH
+      name: 中芯国际
+      weight: 0.2

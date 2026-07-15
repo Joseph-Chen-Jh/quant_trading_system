@@ -12,16 +12,19 @@ Base = declarative_base()
 
 
 class StockBasic(Base):
-    """股票基础信息"""
+    """股票基础信息
+
+    字段与 fetcher.stock_basic.fetch_all_stocks() 输出对齐:
+    akshare 的 stock_zh_a_spot_em / stock_info_a_code_name 仅提供这些字段。
+    若后续需要 industry/area/list_date，应换用支持更丰富字段的接口。
+    """
     __tablename__ = "stock_basic"
 
-    ts_code = Column(String(20), primary_key=True, comment="股票代码")
+    ts_code = Column(String(20), primary_key=True, comment="股票代码 000001.SZ")
+    code = Column(String(10), index=True, comment="纯数字代码 000001")
     name = Column(String(50), comment="股票名称")
-    industry = Column(String(50), comment="行业")
-    area = Column(String(20), comment="地区")
-    list_date = Column(Date, comment="上市日期")
-    delist_date = Column(Date, comment="退市日期")
-    is_hs = Column(String(10), comment="是否沪深港通")
+    market = Column(String(10), comment="市场 SH / SZ")
+    is_st = Column(Integer, comment="是否ST: 0/1")
 
 
 class DailyPrice(Base):
@@ -67,6 +70,16 @@ class FinancialData(Base):
     roe = Column(Float, comment="净资产收益率")
     pe = Column(Float, comment="市盈率")
     pb = Column(Float, comment="市净率")
+
+
+class PEHistory(Base):
+    """历史PE数据 (每日PE值, 用于PE分位数选股)"""
+    __tablename__ = "pe_history"
+    __table_args__ = (PrimaryKeyConstraint("ts_code", "trade_date"),)
+
+    ts_code = Column(String(20), index=True)
+    trade_date = Column(String(10))
+    pe = Column(Float, comment="市盈率(TTM)")
 
 
 class TradeRecord(Base):

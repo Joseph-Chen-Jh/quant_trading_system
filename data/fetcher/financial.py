@@ -81,41 +81,42 @@ def fetch_financial_summary(
     """
     批量获取财务摘要指标 (核心指标快速版)
 
-    使用 stock_xjll_em / stock_zcfz_em 等东方财富接口
+    使用 stock_yjbb_em (东方财富业绩报表) 一次性拉取全市场，
+    本地按 symbols 过滤，避免循环内重复请求导致 IP 被封。
 
     Args:
         symbols: ts_code 列表
-        delay:   请求间隔
+        delay:   已弃用，保留参数为兼容旧调用
     Returns:
-        DataFrame 包含 roe, revenue_growth, profit_growth 等
+        DataFrame 包含 ts_code 及业绩报表原始字段
     """
-    if delay is None:
-        delay = AKSHARE_REQUEST_INTERVAL
-
-    logger.info(f"批量获取 {len(symbols)} 只股票财务数据...")
-    results = []
-
-    for i, ts_code in enumerate(symbols):
-        symbol = ts_code.split(".")[0]
-
-        try:
-            # 用东方财富接口获取关键财务指标
-            df = ak.stock_yjbb_em(date=None)  # 最新业绩报表
-            row = df[df["股票代码"] == symbol]
-            if not row.empty:
-                row["ts_code"] = ts_code
-                results.append(row)
-        except Exception:
-            pass
-
-        time.sleep(delay)
-        if (i + 1) % 100 == 0:
-            logger.info(f"财务数据进度: {i+1}/{len(symbols)}")
-
-    if not results:
+    if not symbols:
         return pd.DataFrame()
 
-    return pd.concat(results, ignore_index=True)
+    logger.info(f"批量获取 {len(symbols)} 只股票财务数据 (单次全市场拉取)...")
+
+    try:
+        df = ak.stock_yjbb_em(date=None)
+    except Exception as e:
+        logger.error(f"获取业绩报表失败: {e}")
+        return pd.DataFrame()
+
+    if df.empty:
+        return pd.DataFrame()
+
+    # 本地过滤: ts_code -> 纯数字 code
+    code_set = {s.split(".")[0] for s in symbols}
+    df_filtered = df[df["股票代码"].astype(str).isin(code_set)].copy()
+    if df_filtered.empty:
+        logger.warning("财务数据未匹配到任何股票")
+        return pd.DataFrame()
+
+    # 补 ts_code
+    code_to_ts = {s.split(".")[0]: s for s in symbols}
+    df_filtered["ts_code"] = df_filtered["股票代码"].astype(str).map(code_to_ts)
+
+    logger.info(f"财务数据匹配: {len(df_filtered)}/{len(symbols)} 只")
+    return df_filtered.reset_index(drop=True)
 
 
 def get_latest_financial_snapshot(

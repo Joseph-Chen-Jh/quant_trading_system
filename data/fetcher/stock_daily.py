@@ -5,6 +5,7 @@ A股日线行情数据抓取
   - 单只股票历史日线
   - 批量全市场抓取（带频率控制）
   - 增量更新
+  - akshare 失败时自动 fallback 到 TickFlow 免费层
 """
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -20,6 +21,14 @@ except ImportError:
     raise
 
 from config.settings import AKSHARE_REQUEST_INTERVAL
+
+# TickFlow fallback (可选依赖, 未装时静默跳过)
+try:
+    from data.fetcher import tickflow_fetcher as _tickflow
+    _tickflow_available = True
+except ImportError:
+    _tickflow = None
+    _tickflow_available = False
 
 
 def _retry(func, name: str, max_retries: int = 3, delay: float = 2.0):
@@ -100,6 +109,8 @@ def fetch_single_stock_by_ts_code(
     """
     通过 ts_code (如 000001.SZ) 获取日线
 
+    优先用 akshare, 失败(限流/空数据)时自动切换 TickFlow 免费层.
+
     Args:
         ts_code: 股票代码 (000001.SZ / 600001.SH)
     """
@@ -107,7 +118,19 @@ def fetch_single_stock_by_ts_code(
     df = fetch_single_stock(symbol, start_date, end_date, adjust)
     if not df.empty:
         df["ts_code"] = ts_code
-    return df
+        return df
+
+    # akshare 失败 → 尝试 TickFlow fallback
+    if not _tickflow_available:
+        return df  # 返回空 DataFrame
+
+    logger.info(f"{ts_code} akshare 失败, 尝试 TickFlow fallback...")
+    tf_df = _tickflow.fetch_single_stock_by_ts_code(
+        ts_code, start_date=start_date, count=5000
+    )
+    if not tf_df.empty:
+        logger.info(f"{ts_code} TickFlow fallback 成功: {len(tf_df)} 行")
+    return tf_df
 
 
 def fetch_batch(
@@ -119,6 +142,8 @@ def fetch_batch(
 ) -> pd.DataFrame:
     """
     批量抓取多只股票日线
+
+    优先 akshare 逐只抓, 失败的 ts_code 在最后用 TickFlow 批量补齐.
 
     Args:
         codes:      ts_code 列表，如 ['000001.SZ', '600001.SH']
@@ -133,6 +158,7 @@ def fetch_batch(
         delay = AKSHARE_REQUEST_INTERVAL
 
     all_data = []
+    failed_codes = []
     total = len(codes)
 
     for i, ts_code in enumerate(codes):
@@ -143,20 +169,37 @@ def fetch_batch(
             if not df.empty:
                 df["ts_code"] = ts_code
                 all_data.append(df)
+            else:
+                failed_codes.append(ts_code)
 
             if (i + 1) % 50 == 0:
-                logger.info(f"进度: {i+1}/{total}")
+                logger.info(f"进度: {i+1}/{total} (失败 {len(failed_codes)})")
 
         except Exception as e:
             logger.warning(f"跳过 {ts_code}: {e}")
+            failed_codes.append(ts_code)
 
         time.sleep(delay)
 
+    # akshare 失败的股票 → TickFlow 批量补齐
+    if failed_codes and _tickflow_available:
+        logger.info(f"akshare 失败 {len(failed_codes)} 只, 用 TickFlow 批量补齐...")
+        tf_df = _tickflow.fetch_batch(
+            failed_codes, start_date=start_date, count=5000, show_progress=False
+        )
+        if not tf_df.empty:
+            all_data.append(tf_df)
+            logger.info(f"TickFlow 补齐成功: {len(tf_df)} 行, "
+                        f"{tf_df['ts_code'].nunique()} 只股票")
+
     if not all_data:
-        logger.warning("未获取到任何数据")
+        logger.warning("未获取到任何数据 (akshare + TickFlow 均失败)")
         return pd.DataFrame()
 
     result = pd.concat(all_data, ignore_index=True)
+    # 去重: 同一 (ts_code, trade_date) 优先保留先到的 (akshare)
+    if "ts_code" in result.columns and "trade_date" in result.columns:
+        result = result.drop_duplicates(subset=["ts_code", "trade_date"], keep="first")
     logger.info(f"批量抓取完成: {len(result)} 行, {result['ts_code'].nunique()} 只股票")
     return result
 

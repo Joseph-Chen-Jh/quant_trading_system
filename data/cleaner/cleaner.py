@@ -12,8 +12,10 @@ def clean_daily_price(df: pd.DataFrame) -> pd.DataFrame:
         return df
 
     df = df.copy()
-    # 去除重复
-    df = df.drop_duplicates(subset=["ts_code", "trade_date"])
+    # 去除重复 (兼容单只股票数据无 ts_code 的情况)
+    dup_cols = [c for c in ["ts_code", "trade_date"] if c in df.columns]
+    if dup_cols:
+        df = df.drop_duplicates(subset=dup_cols)
 
     # 缺失值处理
     numeric_cols = ["open", "high", "low", "close", "volume", "amount"]
@@ -32,19 +34,33 @@ def clean_daily_price(df: pd.DataFrame) -> pd.DataFrame:
         df = df[df["high"] >= df["low"]]
 
     # 排序
-    df = df.sort_values(["ts_code", "trade_date"]).reset_index(drop=True)
+    sort_cols = [c for c in ["ts_code", "trade_date"] if c in df.columns]
+    if sort_cols:
+        df = df.sort_values(sort_cols).reset_index(drop=True)
+    else:
+        df = df.reset_index(drop=True)
 
     return df
 
 
 def clean_stock_basic(df: pd.DataFrame) -> pd.DataFrame:
-    """清洗股票基础信息"""
+    """清洗股票基础信息
+
+    fetcher 返回字段: ts_code, code, name, market, is_st
+    """
+    if df.empty:
+        return df
     df = df.copy()
-    # 去除退市的
-    if "delist_date" not in df.columns:
-        df["delist_date"] = None
-    df["delist_date"] = pd.to_datetime(df["delist_date"], errors="coerce")
-    return df
+    # 去重 (按 ts_code)
+    if "ts_code" in df.columns:
+        df = df.drop_duplicates(subset=["ts_code"])
+    # 代码补零 (akshare 偶尔返回 int)
+    if "code" in df.columns:
+        df["code"] = df["code"].astype(str).str.zfill(6)
+    # is_st: bool -> int (SQLite 无原生 bool)
+    if "is_st" in df.columns:
+        df["is_st"] = df["is_st"].astype(bool).astype(int)
+    return df.reset_index(drop=True)
 
 
 def fill_missing_dates(df: pd.DataFrame) -> pd.DataFrame:

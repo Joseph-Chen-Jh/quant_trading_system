@@ -56,6 +56,8 @@ class VirtualAccount:
 
         # T+1 记录: 今日买入的股票，明日才能卖出
         self.today_bought: set = set()
+        # 当前交易日 (由 scheduler 在每日开始时设置)
+        self.current_trade_date: str = ""
 
     # ---------- 属性 ----------
     @property
@@ -81,6 +83,10 @@ class VirtualAccount:
             if code in self.positions:
                 self.positions[code].current_price = price
 
+    def set_trade_date(self, trade_date: str):
+        """由 scheduler 调用, 设置当前交易日, 供交易记录使用"""
+        self.current_trade_date = trade_date
+
     # ---------- 买入 ----------
     def buy(self, ts_code: str, price: float, volume: int) -> dict:
         """买入股票"""
@@ -96,10 +102,7 @@ class VirtualAccount:
         if total_required > self.available_cash:
             return {"success": False, "reason": f"资金不足 (需要 {total_required:,.0f}, 可用 {self.available_cash:,.0f})"}
 
-        # 冻结
-        self.frozen_cash += total_required
-
-        # 更新持仓
+        # 更新持仓 (同步成交, 不需要冻结资金)
         if ts_code in self.positions:
             pos = self.positions[ts_code]
             combined = pos.cost_price * pos.volume + actual_price * volume
@@ -113,7 +116,6 @@ class VirtualAccount:
 
         # 结算
         self.cash -= total_required
-        self.frozen_cash -= total_required
         self.today_bought.add(ts_code)
 
         self._log_trade("BUY", ts_code, actual_price, volume, commission, 0)
@@ -196,7 +198,8 @@ class VirtualAccount:
     # ---------- 内部 ----------
     def _log_trade(self, direction, ts_code, price, volume, commission, tax, pnl=None):
         self.trade_history.append({
-            "time": datetime.now(),
+            "trade_date": self.current_trade_date,  # 真实交易日, 由 scheduler 设置
+            "time": datetime.now(),                 # 回测运行时刻 (保留用于调试)
             "direction": direction,
             "ts_code": ts_code,
             "price": price,

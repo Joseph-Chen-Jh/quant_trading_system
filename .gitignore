@@ -13,6 +13,8 @@ env/
 # 数据库
 *.db
 *.sqlite3
+*.csv
+output/
 
 # 日志
 logs/

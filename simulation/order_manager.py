@@ -52,8 +52,8 @@ class OrderManager:
         if amounts and amounts.get(ts_code, 0) < MIN_DAILY_AMOUNT:
             return {"signal": signal, "result": "SKIP", "reason": "日成交额不足"}
 
-        # 3. 总回撤
-        if self.account.total_return < -MAX_DRAWDOWN and self.account.positions:
+        # 3. 总回撤 — 只拦截 BUY (停止开新仓), SELL 必须放行 (止损必须执行)
+        if action == "BUY" and self.account.total_return < -MAX_DRAWDOWN and self.account.positions:
             return {"signal": signal, "result": "SKIP", "reason": f"总回撤超过{MAX_DRAWDOWN:.0%}警戒线"}
 
         if action == "BUY":

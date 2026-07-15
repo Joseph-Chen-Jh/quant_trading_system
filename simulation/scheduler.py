@@ -30,6 +30,9 @@ class SimulationScheduler:
         """
         logger.info(f"--- 模拟交易日: {trade_date} ---")
 
+        # 0. 设置当前交易日 (供交易记录使用)
+        self.account.set_trade_date(trade_date)
+
         # 1. 更新持仓市值
         self.account.update_prices(prices)
 

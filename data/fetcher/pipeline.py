@@ -55,9 +55,8 @@ def pipeline_full(years: int = 5):
     logger.info("Step 2/4: 抓取指数日线")
     index_df = fetch_all_indices(start_date="20150101", end_date=end_date)
     if not index_df.empty:
-        index_df = clean_daily_price(index_df.rename(
-            columns={c: c for c in index_df.columns if c in ["ts_code", "trade_date", "open", "high", "low", "close", "volume", "amount"]}
-        ))
+        # fetch_index_daily 已返回标准列名 (ts_code, trade_date, open, high, low, close, ...)
+        index_df = clean_daily_price(index_df)
         store.save_index_daily(index_df)
     logger.info(f"指数数据: {len(index_df)} 行")
 

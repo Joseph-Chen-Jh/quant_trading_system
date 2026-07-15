@@ -68,24 +68,25 @@ def fetch_index_daily(
     if df.empty:
         return df
 
-    # 标准化列名
-    rename_map = {}
-    for col in df.columns:
-        if "日期" in col:
-            rename_map[col] = "trade_date"
-        elif "开盘" in col:
-            rename_map[col] = "open"
-        elif "收盘" in col:
-            rename_map[col] = "close"
-        elif "最高" in col:
-            rename_map[col] = "high"
-        elif "最低" in col:
-            rename_map[col] = "low"
-        elif "成交量" in col:
-            rename_map[col] = "volume"
-        elif "成交额" in col:
-            rename_map[col] = "amount"
-    df = df.rename(columns=rename_map)
+    # 标准化列名 (兼容中英文)
+    # - ak.stock_zh_index_daily 返回英文列名: date/open/high/low/close/volume
+    # - ak.index_zh_a_hist      返回中文列名: 日期/开盘/最高/最低/收盘/成交量/成交额
+    rename_map = {
+        "date": "trade_date", "日期": "trade_date",
+        "open": "open", "开盘": "open",
+        "high": "high", "最高": "high",
+        "low": "low", "最低": "low",
+        "close": "close", "收盘": "close",
+        "volume": "volume", "成交量": "volume",
+        "amount": "amount", "成交额": "amount",
+    }
+    # 只保留实际存在的列，避免重命名不存在的列时被 pandas 警告
+    actual_rename = {k: v for k, v in rename_map.items() if k in df.columns}
+    df = df.rename(columns=actual_rename)
+
+    if "trade_date" not in df.columns:
+        logger.warning(f"指数 {index_code} 返回数据缺少日期列，原始列: {list(df.columns)}")
+        return pd.DataFrame()
 
     df["trade_date"] = pd.to_datetime(df["trade_date"]).dt.strftime("%Y%m%d")
     df["ts_code"] = index_code
