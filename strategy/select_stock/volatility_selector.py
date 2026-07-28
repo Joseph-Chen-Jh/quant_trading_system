@@ -3,12 +3,16 @@
 
 职责:
     每月调仓日, 从候选池中按"过去 N 天日收益率标准差"排序,
-    选出波动率最高的 top_n 只股票作为"可买入池"。
+    选出波动率最高 (或最低) 的 top_n 只股票作为"可买入池"。
 
 设计要点 (方式 B):
     - 只更新"可买入池", 不清仓已持仓
     - 已持仓的股票即使跌出 top_n, 也继续持有, 交给 MA 死叉/止损决定何时卖
     - 新买入信号只允许买"可买入池"里的股票
+
+mode:
+    - "high": 选高波动股 (默认, 适合 MA 趋势策略)
+    - "low":  选低波动股 (适合 RSI 均值回归策略, 低波动股 RSI 在 30-70 规律震荡)
 """
 import pandas as pd
 import numpy as np
@@ -24,16 +28,19 @@ class VolatilitySelector:
         lookback_days: int = 60,
         top_n: int = 10,
         rebalance_freq: str = "monthly",
+        mode: str = "high",
     ):
         """
         Args:
             lookback_days: 计算波动率的回看天数 (交易日)
             top_n:         选波动率前 N 只
             rebalance_freq: 调仓频率 ("monthly" 每月 / "weekly" 每周)
+            mode:          "high"=选高波动前 N 只, "low"=选低波动前 N 只
         """
         self.lookback_days = lookback_days
         self.top_n = top_n
         self.rebalance_freq = rebalance_freq
+        self.mode = mode
 
         # 当前可买入池
         self.tradable_pool: List[str] = []
@@ -111,8 +118,8 @@ class VolatilitySelector:
             if vol > 0:
                 volatilities.append((ts_code, vol))
 
-        # 按波动率降序排序, 取前 top_n
-        volatilities.sort(key=lambda x: x[1], reverse=True)
+        # 按波动率排序: high 模式降序取前 top_n, low 模式升序取前 top_n
+        volatilities.sort(key=lambda x: x[1], reverse=(self.mode == "high"))
         new_pool = [code for code, _ in volatilities[:self.top_n]]
 
         self.tradable_pool = new_pool
@@ -123,10 +130,12 @@ class VolatilitySelector:
         })
 
         if new_pool:
-            min_vol = volatilities[len(new_pool)-1][1] if len(volatilities) >= len(new_pool) else 0
+            # 边界波动率: high 模式看最低值, low 模式看最高值
+            edge_vol = volatilities[len(new_pool)-1][1] if len(volatilities) >= len(new_pool) else 0
+            mode_label = "高波动" if self.mode == "high" else "低波动"
             logger.info(
-                f"波动率调仓 {current_date}: 选出 {len(new_pool)} 只, "
-                f"最低波动率 {min_vol:.1%}"
+                f"波动率调仓 {current_date} ({mode_label}模式): 选出 {len(new_pool)} 只, "
+                f"边界波动率 {edge_vol:.1%}"
             )
 
         return new_pool

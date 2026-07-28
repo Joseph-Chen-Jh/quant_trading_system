@@ -29,7 +29,10 @@ from loguru import logger
 from config.log_config import logger  # noqa: F401 — 初始化日志配置
 from config.settings import DATABASE_PATH
 from data.storage.models import init_database
-from cli.parser import build_parser
+from cli.parser import (
+    build_parser, build_single_backtest_config,
+    build_backtest_config, build_pe_config,
+)
 from cli.data_commands import cmd_update_data, cmd_fetch_pool
 from cli.backtest_commands import cmd_backtest, cmd_backtest_pool, cmd_backtest_pe
 from cli.sim_commands import cmd_simulation, cmd_report
@@ -48,46 +51,19 @@ def main():
         cmd_update_data()
 
     elif args.mode == "backtest":
-        cmd_backtest(
-            ts_code=args.stock,
-            start_date=args.start,
-            end_date=args.end,
-            short_window=args.short,
-            long_window=args.long,
-        )
+        cfg = build_single_backtest_config(args)
+        cmd_backtest(cfg)
 
     elif args.mode == "backtest-pool":
-        cmd_backtest_pool(
-            pool_name=args.pool,
-            start_date=args.start,
-            end_date=args.end,
-            short_window=args.short,
-            long_window=args.long,
-            stop_loss_type=args.stop_loss,
-            stop_loss_pct=args.stop_pct,
-            adx_threshold=args.adx_threshold,
-            dynamic_vol=args.dynamic_vol,
-            vol_lookback=args.vol_lookback,
-            vol_top=args.vol_top,
-            market_filter_rule=args.market_filter,
-            use_position_scaler=args.position_scaler,
-            use_rsi=args.rsi,
-            portfolio_dd_threshold=args.portfolio_dd,
-        )
+        cfg = build_backtest_config(args)
+        cmd_backtest_pool(cfg)
 
     elif args.mode == "fetch-pool":
         cmd_fetch_pool(pool_name=args.pool, start_date=args.start)
 
     elif args.mode == "backtest-pe":
-        cmd_backtest_pe(
-            pool_name=args.pool,
-            start_date=args.start,
-            end_date=args.end,
-            quantile_threshold=args.quantile,
-            lookback_years=args.lookback,
-            top_n=args.top_n,
-            rebalance_freq=args.freq,
-        )
+        cfg = build_pe_config(args)
+        cmd_backtest_pe(cfg)
 
     elif args.mode == "simulation":
         cmd_simulation()
@@ -98,7 +74,7 @@ def main():
     elif args.mode == "full":
         logger.info("一键全流程 — 待串联各模块")
         cmd_update_data()
-        cmd_backtest()
+        cmd_backtest(build_single_backtest_config(args))
         cmd_simulation()
         cmd_report()
 

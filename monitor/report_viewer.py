@@ -305,6 +305,7 @@ def load_report(nav_path: str, trades_path: str) -> BacktestReport:
 def find_default_report() -> tuple:
     """查找默认的回测结果文件路径"""
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    nav_path = os.path.join(root, "backtest_nav.csv")
-    trades_path = os.path.join(root, "backtest_trades.csv")
+    output_dir = os.path.join(root, "output")
+    nav_path = os.path.join(output_dir, "backtest_nav.csv")
+    trades_path = os.path.join(output_dir, "backtest_trades.csv")
     return nav_path, trades_path

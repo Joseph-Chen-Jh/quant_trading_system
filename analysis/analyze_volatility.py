@@ -29,7 +29,7 @@ from data.storage.database import DataStore
 
 def load_trades():
     """加载交易明细"""
-    path = PROJECT_ROOT / "backtest_trades.csv"
+    path = PROJECT_ROOT / "output" / "backtest_trades.csv"
     if not path.exists():
         logger.error(f"未找到交易明细: {path}")
         sys.exit(1)

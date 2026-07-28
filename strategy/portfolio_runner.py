@@ -256,6 +256,9 @@ class PortfolioRunner:
             # 3. 收盘后检查止损 (此时 account.positions 的 current_price 已是当日收盘价)
             stop_signals = []
             if self.stop_loss:
+                # 时间止损/组合止损需要知道当前日期
+                if hasattr(self.stop_loss, 'set_current_date'):
+                    self.stop_loss.set_current_date(date)
                 stop_signals = self.stop_loss.generate_sell_signals(self.account)
                 if stop_signals:
                     n_stop_triggered += len(stop_signals)

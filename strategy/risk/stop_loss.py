@@ -4,6 +4,8 @@
 功能:
     - 固定比例止损 (FixedStopLoss): 亏损达阈值即止损 (相对成本价)
     - 追踪止损 (TrailingStopLoss): 从持仓最高价回撤达阈值即止损 (推荐趋势策略使用)
+    - 时间止损 (TimeStopLoss): 持满 max_hold_days 仍无盈利则止损卖出
+    - 组合止损 (ComboStopLoss): 追踪止损 + 时间止损, 先到先卖
 
 接入方式:
     由 PortfolioRunner 在每日收盘后调用, 生成 SELL 信号,
@@ -163,6 +165,153 @@ class TrailingStopLoss:
         """持仓清仓后调用, 清理最高价记录"""
         if ts_code in self._highest_price:
             del self._highest_price[ts_code]
+
+
+class TimeStopLoss:
+    """
+    时间止损
+
+    语义: 持满 max_hold_days 个交易日仍无盈利 (当前价 <= 成本价) 则止损
+    特点:
+        - 只在"持有到期且未盈利"时触发, 盈利的仓位不受时间限制
+        - 避免资金长期占用在横盘不反弹的股票上 (RSI 抄底后不涨)
+        - 需要外部调用 set_current_date() 设置当前交易日
+    """
+
+    def __init__(self, max_hold_days: int = 20, enabled: bool = True):
+        self.max_hold_days = max_hold_days
+        self.enabled = enabled
+        self._buy_dates: Dict[str, str] = {}  # ts_code -> 买入日期
+        self._current_date: str = ""
+
+    def set_current_date(self, date: str):
+        """设置当前交易日 (由 PortfolioRunner 每日调用)"""
+        self._current_date = date
+
+    def _cleanup_closed(self, account: VirtualAccount):
+        """清理已清仓股票的买入日期记录"""
+        closed = [code for code in self._buy_dates if code not in account.positions]
+        for code in closed:
+            del self._buy_dates[code]
+
+    def _calc_hold_days(self, buy_date: str, current_date: str) -> int:
+        """计算持仓交易日数 (近似: 日期字符串差值 / 1.4 因子, 或直接用 trade_dates 列表)
+        简化: 用 PortfolioRunner 的 trade_dates 索引差, 但这里拿不到.
+        退而求其次: 在 _buy_dates 中存的是买入日的索引序号.
+        """
+        # 由于无法直接访问 trade_dates 列表, 改为存储序号
+        # 这个方法不会用到, 实际用 _calc_hold_days_by_index
+        return 0
+
+    def check(self, account: VirtualAccount) -> List[StopLossSignal]:
+        """检查所有持仓, 返回需要止损的信号列表"""
+        if not self.enabled or not self._current_date:
+            return []
+
+        self._cleanup_closed(account)
+
+        signals = []
+        for ts_code, position in account.positions.items():
+            # 跳过今日买入的股票 (T+1 规则)
+            if ts_code in account.today_bought:
+                continue
+
+            # 记录新持仓的买入日期 (第一次出现时记录)
+            if ts_code not in self._buy_dates:
+                self._buy_dates[ts_code] = self._current_date
+
+            buy_date = self._buy_dates[ts_code]
+            hold_days = self._calc_hold_days_from_dates(buy_date, self._current_date)
+
+            # 持满 max_hold_days 且无盈利 (当前价 <= 成本价) 才触发
+            if hold_days >= self.max_hold_days and position.current_price <= position.cost_price:
+                loss_pct = position.profit_loss_pct
+                signals.append(StopLossSignal(
+                    ts_code=ts_code,
+                    current_price=position.current_price,
+                    loss_pct=loss_pct,
+                    trigger_pct=float(hold_days),
+                ))
+        return signals
+
+    def _calc_hold_days_from_dates(self, buy_date: str, current_date: str) -> int:
+        """近似计算持仓交易日数 (日历天数的 5/7, 约 0.71)
+        buy_date / current_date 格式: 'YYYYMMDD' 或 'YYYY-MM-DD'
+        """
+        from datetime import datetime
+        def parse(d):
+            d = d.replace("-", "")
+            return datetime(int(d[:4]), int(d[4:6]), int(d[6:8]))
+        delta = (parse(current_date) - parse(buy_date)).days
+        # 日历天数转交易日数: 约 5/7
+        return int(delta * 5 / 7)
+
+    def generate_sell_signals(self, account: VirtualAccount) -> List[Dict]:
+        """生成止损 SELL 信号 (格式与策略信号一致)"""
+        stop_signals = self.check(account)
+        return [
+            {
+                "ts_code": s.ts_code,
+                "action": "SELL",
+                "price": s.current_price,
+                "reason": "time_stop",
+            }
+            for s in stop_signals
+        ]
+
+    def on_position_closed(self, ts_code: str):
+        """持仓清仓后调用, 清理买入日期记录"""
+        if ts_code in self._buy_dates:
+            del self._buy_dates[ts_code]
+
+
+class ComboStopLoss:
+    """
+    组合止损: 追踪止损 + 时间止损, 先到先卖
+
+    语义: 从最高价回撤 trailing_pct 或 持满 max_hold_days 无盈利, 任一条件满足即触发
+    特点: 兼顾回撤控制和时间效率
+    """
+
+    def __init__(self, trailing_pct: float = TRAILING_STOP_PCT, max_hold_days: int = 30, enabled: bool = True):
+        self.trailing = TrailingStopLoss(trailing_pct=trailing_pct, enabled=enabled)
+        self.time_stop = TimeStopLoss(max_hold_days=max_hold_days, enabled=enabled)
+        self.enabled = enabled
+
+    def set_current_date(self, date: str):
+        """设置当前交易日 (由 PortfolioRunner 每日调用)"""
+        self.time_stop.set_current_date(date)
+
+    def check(self, account: VirtualAccount) -> List[StopLossSignal]:
+        if not self.enabled:
+            return []
+        # 两个止损分别检查, 去重 (同一股票可能同时触发两个条件)
+        trailing_sigs = self.trailing.check(account)
+        time_sigs = self.time_stop.check(account)
+        # 合并去重: 以 ts_code 为 key, trailing 优先
+        seen = set()
+        combined = []
+        for s in trailing_sigs + time_sigs:
+            if s.ts_code not in seen:
+                seen.add(s.ts_code)
+                combined.append(s)
+        return combined
+
+    def generate_sell_signals(self, account: VirtualAccount) -> List[Dict]:
+        stop_signals = self.check(account)
+        return [
+            {
+                "ts_code": s.ts_code,
+                "action": "SELL",
+                "price": s.current_price,
+                "reason": "combo_stop",
+            }
+            for s in stop_signals
+        ]
+
+    def on_position_closed(self, ts_code: str):
+        self.trailing.on_position_closed(ts_code)
+        self.time_stop.on_position_closed(ts_code)
 
 
 def generate_stop_loss_signals(

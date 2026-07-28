@@ -26,7 +26,9 @@ def cmd_simulation():
 
     # 输出摘要
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    rg = ReportGenerator(account, output_dir=base_dir)
+    output_dir = os.path.join(base_dir, "output")
+    os.makedirs(output_dir, exist_ok=True)
+    rg = ReportGenerator(account, output_dir=output_dir)
     print(rg.generate_text_summary())
 
     # 风控检查
