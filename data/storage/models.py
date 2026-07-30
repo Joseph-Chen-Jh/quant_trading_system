@@ -40,6 +40,7 @@ class DailyPrice(Base):
     close = Column(Float)
     volume = Column(Float)
     amount = Column(Float)
+    turnover = Column(Float, comment="换手率(%)")
 
 
 class IndexDaily(Base):
@@ -80,6 +81,29 @@ class PEHistory(Base):
     ts_code = Column(String(20), index=True)
     trade_date = Column(String(10))
     pe = Column(Float, comment="市盈率(TTM)")
+
+
+class ChipDistribution(Base):
+    """筹码分布衍生指标 (基于 K线+换手率 估算, 精度约 90%, 对标通达信 CYQ)
+
+    计算方法: 三角分布 + 换手率衰减
+    - 当日新增筹码按三角形落在 [low, high, avg] 区间, avg=(H+L+C)/3
+    - 旧筹码按 (1 - turnover * decay_coeff) 衰减
+    - 计算窗口: 滚动 120 天
+    """
+    __tablename__ = "chip_distribution"
+    __table_args__ = (PrimaryKeyConstraint("ts_code", "trade_date"),)
+
+    ts_code = Column(String(20), index=True)
+    trade_date = Column(String(10))
+    profit_ratio = Column(Float, comment="获利比例 (0-1): 当前价以下筹码占比")
+    avg_cost = Column(Float, comment="平均成本: 筹码加权均价")
+    cost_90_low = Column(Float, comment="90%筹码下沿")
+    cost_90_high = Column(Float, comment="90%筹码上沿")
+    concentration_90 = Column(Float, comment="90%集中度: (上沿-下沿)/均价")
+    cost_70_low = Column(Float, comment="70%筹码下沿")
+    cost_70_high = Column(Float, comment="70%筹码上沿")
+    concentration_70 = Column(Float, comment="70%集中度: (上沿-下沿)/均价")
 
 
 class TradeRecord(Base):

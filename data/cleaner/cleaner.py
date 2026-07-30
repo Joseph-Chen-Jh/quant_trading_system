@@ -18,7 +18,7 @@ def clean_daily_price(df: pd.DataFrame) -> pd.DataFrame:
         df = df.drop_duplicates(subset=dup_cols)
 
     # 缺失值处理
-    numeric_cols = ["open", "high", "low", "close", "volume", "amount"]
+    numeric_cols = ["open", "high", "low", "close", "volume", "amount", "turnover"]
     for col in numeric_cols:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")

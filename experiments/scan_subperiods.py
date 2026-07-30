@@ -65,7 +65,7 @@ SUBPERIODS = SUBPERIODS_5
 DATA_START = "20240101"
 
 
-def run_subperiod(start_date: str, end_date: str, label: str, lookback_days: int, use_scaler: bool = False, use_rsi: bool = False, pool_name: str = "csi100", strategy_name: str = "ma", multi_period: bool = False, vol_mode: str = "high", use_vol: bool = True, vol_top: int = 10, stop_loss_type: str = "trailing", max_hold_days: int = 20, trend_adaptive: bool = False, zero_filter: bool = False, use_j_filter: bool = False) -> dict:
+def run_subperiod(start_date: str, end_date: str, label: str, lookback_days: int, use_scaler: bool = False, use_rsi: bool = False, pool_name: str = "csi100", strategy_name: str = "ma", multi_period: bool = False, vol_mode: str = "high", use_vol: bool = True, vol_top: int = 10, stop_loss_type: str = "trailing", max_hold_days: int = 20, trend_adaptive: bool = False, zero_filter: bool = False, use_j_filter: bool = False, turnover_sell: bool = False, turnover_sell_ratio: float = 2.5) -> dict:
     """跑单个子区间, 返回关键指标"""
     start_yyyymmdd = start_date.replace("-", "")
     end_yyyymmdd = end_date.replace("-", "")
@@ -75,20 +75,24 @@ def run_subperiod(start_date: str, end_date: str, label: str, lookback_days: int
     zf_label = " +零轴过滤" if zero_filter else ""
     jf_label = " +J线过滤" if use_j_filter else ""
     mp_label = " +多周期共振" if multi_period else ""
+    ts_label = f" +换手率卖出(x{turnover_sell_ratio})" if turnover_sell else ""
     print(f"\n{'='*60}")
-    print(f"子区间: {label} ({start_date} ~ {end_date}) [回看 {lookback_days} 天, 仓位管理={use_scaler}, RSI={use_rsi}, 池={pool_name}, 策略={strategy_name}{mp_label}, 波动={vol_label}{ta_label}{zf_label}{jf_label}]")
+    print(f"子区间: {label} ({start_date} ~ {end_date}) [回看 {lookback_days} 天, 仓位管理={use_scaler}, RSI={use_rsi}, 池={pool_name}, 策略={strategy_name}{mp_label}, 波动={vol_label}{ta_label}{zf_label}{jf_label}{ts_label}]")
     print(f"{'='*60}")
 
     pool = load_pool(pool_name)
     if strategy_name == "rsi":
         from strategy.timing.rsi_revert import RSIRevertStrategy
-        strategy = RSIRevertStrategy(rsi_period=14, oversold=30, overbought=70, multi_period=multi_period, trend_adaptive=trend_adaptive)
+        strategy = RSIRevertStrategy(rsi_period=14, oversold=30, overbought=70, multi_period=multi_period, trend_adaptive=trend_adaptive, turnover_sell=turnover_sell, turnover_sell_ratio=turnover_sell_ratio)
     elif strategy_name == "macd":
         from strategy.timing.macd import MACDStrategy
         strategy = MACDStrategy(fast_period=12, slow_period=26, signal_period=9, zero_filter=zero_filter)
     elif strategy_name == "kdj":
         from strategy.timing.kdj import KDJStrategy
         strategy = KDJStrategy(n_period=9, m1=3, m2=3, oversold_threshold=20, overbought_threshold=80, use_j_filter=use_j_filter, multi_period=multi_period)
+    elif strategy_name == "macd_rsi":
+        from strategy.timing.macd_rsi_switch import MACDRSISwitchStrategy
+        strategy = MACDRSISwitchStrategy(fast_period=12, slow_period=26, signal_period=9, rsi_period=14, oversold=30, overbought=70, long_rsi_period=21, long_rsi_threshold=50)
     else:
         strategy = MACrossStrategy(short_window=5, long_window=30)
     account = VirtualAccount()
@@ -245,47 +249,61 @@ def run_subperiod(start_date: str, end_date: str, label: str, lookback_days: int
     return result
 
 
+def build_parser():
+    """构建命令行参数解析器"""
+    import argparse
+    p = argparse.ArgumentParser(
+        description="子区间稳定性验证: 把回测区间拆成多个子区间, 看策略在每段是否稳定跑赢基准",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    # 位置参数: 回看天数 (兼容旧用法 scan_subperiods.py 120 --5y)
+    p.add_argument("lookback", type=int, nargs="?", default=120, help="波动率回看天数")
+    # 区间与池
+    p.add_argument("--5y", action="store_true", help="5年模式(10段子区间), 默认2.5年(5段)")
+    p.add_argument("--pool", default="csi300", help="股票池名称")
+    p.add_argument("--strategy", default="ma", choices=["ma", "rsi", "macd", "kdj", "macd_rsi"], help="策略名称")
+    # 策略通用开关
+    p.add_argument("--multi-period", action="store_true", help="多周期共振 (RSI/KDJ)")
+    p.add_argument("--trend-adaptive", action="store_true", help="趋势适配 (RSI)")
+    p.add_argument("--zero-filter", action="store_true", help="零轴过滤 (MACD)")
+    p.add_argument("--j-filter", action="store_true", help="J线过滤 (KDJ)")
+    # 波动率筛选
+    p.add_argument("--vol-mode", default="high", choices=["high", "low"], help="波动率筛选模式")
+    p.add_argument("--vol-top", type=int, default=10, help="选高/低波动前N只")
+    p.add_argument("--no-vol", action="store_true", help="不筛选波动率 (中性对照)")
+    # 止损
+    p.add_argument("--stop-loss", default="trailing", choices=["trailing", "fixed", "time", "combo", "none"], help="止损类型")
+    p.add_argument("--max-hold-days", type=int, default=20, help="时间止损最大持有天数")
+    # RSI 换手率卖出优化 (方向D, 15.4节验证ratio=2.5最优)
+    p.add_argument("--turnover-sell", action="store_true", help="启用换手率高位放量卖出 (RSI方向D)")
+    p.add_argument("--turnover-sell-ratio", type=float, default=2.5, help="换手率卖出倍数 (2.5为最优)")
+    # 附加模块
+    p.add_argument("--scaler", action="store_true", help="启用仓位管理")
+    p.add_argument("--rsi", action="store_true", help="附加RSI策略 (多策略并行)")
+    return p
+
+
 def main():
-    lookback_days = int(sys.argv[1]) if len(sys.argv) > 1 and not sys.argv[1].startswith("--") else 120
-    use_scaler = "--scaler" in sys.argv
-    use_rsi = "--rsi" in sys.argv
-    use_5y = "--5y" in sys.argv
-    multi_period = "--multi-period" in sys.argv
-    trend_adaptive = "--trend-adaptive" in sys.argv
-    zero_filter = "--zero-filter" in sys.argv
-    use_j_filter = "--j-filter" in sys.argv
-    # 解析 --pool 参数
-    pool_name = "csi300"
-    for i, arg in enumerate(sys.argv):
-        if arg == "--pool" and i + 1 < len(sys.argv):
-            pool_name = sys.argv[i + 1]
-    # 解析 --strategy 参数
-    strategy_name = "ma"
-    for i, arg in enumerate(sys.argv):
-        if arg == "--strategy" and i + 1 < len(sys.argv):
-            strategy_name = sys.argv[i + 1]
-    # 解析 --vol-mode 参数
-    vol_mode = "high"
-    for i, arg in enumerate(sys.argv):
-        if arg == "--vol-mode" and i + 1 < len(sys.argv):
-            vol_mode = sys.argv[i + 1]
-    # 解析 --no-vol 参数 (不筛选波动率, 中性对照组)
-    use_vol = "--no-vol" not in sys.argv
-    # 解析 --vol-top 参数
-    vol_top = 10
-    for i, arg in enumerate(sys.argv):
-        if arg == "--vol-top" and i + 1 < len(sys.argv):
-            vol_top = int(sys.argv[i + 1])
-    # 解析 --stop-loss 参数
-    stop_loss_type = "trailing"
-    for i, arg in enumerate(sys.argv):
-        if arg == "--stop-loss" and i + 1 < len(sys.argv):
-            stop_loss_type = sys.argv[i + 1]
-    # 解析 --max-hold-days 参数
-    max_hold_days = 20
-    for i, arg in enumerate(sys.argv):
-        if arg == "--max-hold-days" and i + 1 < len(sys.argv):
-            max_hold_days = int(sys.argv[i + 1])
+    parser = build_parser()
+    args = parser.parse_args()
+
+    lookback_days = args.lookback
+    use_scaler = args.scaler
+    use_rsi = args.rsi
+    use_5y = getattr(args, "5y")
+    multi_period = args.multi_period
+    trend_adaptive = args.trend_adaptive
+    zero_filter = args.zero_filter
+    use_j_filter = args.j_filter
+    turnover_sell = args.turnover_sell
+    turnover_sell_ratio = args.turnover_sell_ratio
+    pool_name = args.pool
+    strategy_name = args.strategy
+    vol_mode = args.vol_mode
+    use_vol = not args.no_vol
+    vol_top = args.vol_top
+    stop_loss_type = args.stop_loss
+    max_hold_days = args.max_hold_days
 
     # 切换到 5 年模式 (10 段子区间)
     global SUBPERIODS
@@ -301,7 +319,7 @@ def main():
     results = []
     for start, end, label in SUBPERIODS:
         try:
-            r = run_subperiod(start, end, label, lookback_days, use_scaler=use_scaler, use_rsi=use_rsi, pool_name=pool_name, strategy_name=strategy_name, multi_period=multi_period, vol_mode=vol_mode, use_vol=use_vol, vol_top=vol_top, stop_loss_type=stop_loss_type, max_hold_days=max_hold_days, trend_adaptive=trend_adaptive, zero_filter=zero_filter, use_j_filter=use_j_filter)
+            r = run_subperiod(start, end, label, lookback_days, use_scaler=use_scaler, use_rsi=use_rsi, pool_name=pool_name, strategy_name=strategy_name, multi_period=multi_period, vol_mode=vol_mode, use_vol=use_vol, vol_top=vol_top, stop_loss_type=stop_loss_type, max_hold_days=max_hold_days, trend_adaptive=trend_adaptive, zero_filter=zero_filter, use_j_filter=use_j_filter, turnover_sell=turnover_sell, turnover_sell_ratio=turnover_sell_ratio)
             results.append(r)
         except Exception as e:
             print(f"{label} 失败: {e}")
@@ -367,6 +385,7 @@ def main():
     suffix_str += "_ta" if trend_adaptive else ""
     suffix_str += "_zf" if zero_filter else ""
     suffix_str += "_jf" if use_j_filter else ""
+    suffix_str += "_ts" if turnover_sell else ""
     out_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
         "output", f"scan_subperiods_{lookback_days}d{suffix_str}_results.json"

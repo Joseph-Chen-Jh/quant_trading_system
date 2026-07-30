@@ -194,15 +194,6 @@ class TimeStopLoss:
         for code in closed:
             del self._buy_dates[code]
 
-    def _calc_hold_days(self, buy_date: str, current_date: str) -> int:
-        """计算持仓交易日数 (近似: 日期字符串差值 / 1.4 因子, 或直接用 trade_dates 列表)
-        简化: 用 PortfolioRunner 的 trade_dates 索引差, 但这里拿不到.
-        退而求其次: 在 _buy_dates 中存的是买入日的索引序号.
-        """
-        # 由于无法直接访问 trade_dates 列表, 改为存储序号
-        # 这个方法不会用到, 实际用 _calc_hold_days_by_index
-        return 0
-
     def check(self, account: VirtualAccount) -> List[StopLossSignal]:
         """检查所有持仓, 返回需要止损的信号列表"""
         if not self.enabled or not self._current_date:
@@ -316,7 +307,7 @@ class ComboStopLoss:
 
 def generate_stop_loss_signals(
     account: VirtualAccount,
-    stop_loss: Union[FixedStopLoss, TrailingStopLoss],
+    stop_loss: Union[FixedStopLoss, TrailingStopLoss, "TimeStopLoss", "ComboStopLoss"],
 ) -> List[Dict]:
     """
     检查止损并生成 SELL 信号

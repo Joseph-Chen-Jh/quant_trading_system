@@ -47,6 +47,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 import pandas as pd
 import numpy as np
+from loguru import logger
 from strategy.base_strategy import BaseStrategy
 
 
@@ -74,6 +75,10 @@ class RSIRevertStrategy(BaseStrategy):
         trend_slope_window: int = 5,
         relaxed_oversold: float = 40.0,
         relaxed_long_threshold: float = 60.0,
+        # D: 换手率高位放量卖出 (15.4 节验证为唯一有效优化, ratio=2.5 最优)
+        turnover_sell: bool = False,
+        turnover_sell_ratio: float = 2.5,
+        turnover_sell_lookback: int = 20,
     ):
         """
         Args:
@@ -117,6 +122,10 @@ class RSIRevertStrategy(BaseStrategy):
         self.trend_slope_window = trend_slope_window
         self.relaxed_oversold = relaxed_oversold
         self.relaxed_long_threshold = relaxed_long_threshold
+        # D: 换手率高位放量卖出
+        self.turnover_sell = turnover_sell
+        self.turnover_sell_ratio = turnover_sell_ratio
+        self.turnover_sell_lookback = turnover_sell_lookback
         self.params = {
             "rsi_period": rsi_period,
             "oversold": oversold,
@@ -137,6 +146,7 @@ class RSIRevertStrategy(BaseStrategy):
             "trend_slope_window": trend_slope_window,
             "relaxed_oversold": relaxed_oversold,
             "relaxed_long_threshold": relaxed_long_threshold,
+            "turnover_sell": turnover_sell,
         }
 
     def _compute_rsi(self, close: pd.Series, period: int = None) -> pd.Series:
@@ -202,6 +212,55 @@ class RSIRevertStrategy(BaseStrategy):
             return (30.0, 70.0)
         else:
             return (None, None)
+
+    def _apply_turnover_sell(self, df: pd.DataFrame) -> pd.DataFrame:
+        """用状态机遍历, 应用换手率高位放量卖出条件 (D)
+
+        保留原始 RSI 卖出信号, 新增换手率放量卖出条件.
+        当日 turnover >= 近 N 天 turnover 均值的 turnover_sell_ratio 倍时卖出.
+        """
+        if "turnover" not in df.columns:
+            logger.warning("turnover_sell 启用但数据无 turnover 列, 跳过")
+            return df
+
+        df["_turnover_ma_sell"] = (
+            df["turnover"].shift(1).rolling(self.turnover_sell_lookback).mean()
+        )
+
+        original_actions = df["action"].copy()
+        in_position = False
+        new_actions = []
+
+        for i in range(len(df)):
+            orig = original_actions.iloc[i]
+
+            if in_position:
+                # 持仓中: 原始 RSI 卖出信号仍然有效
+                if orig == "SELL":
+                    new_actions.append("SELL")
+                    in_position = False
+                    continue
+
+                # D: 换手率高位放量卖出
+                turnover = df["turnover"].iloc[i]
+                turnover_ma = df["_turnover_ma_sell"].iloc[i]
+                if pd.notna(turnover) and pd.notna(turnover_ma) and turnover_ma > 0:
+                    if turnover >= turnover_ma * self.turnover_sell_ratio:
+                        new_actions.append("SELL")
+                        in_position = False
+                        continue
+
+                new_actions.append("HOLD")
+            else:
+                # 空仓: 检查买入信号
+                if orig == "BUY":
+                    new_actions.append("BUY")
+                    in_position = True
+                else:
+                    new_actions.append("HOLD")
+
+        df["action"] = new_actions
+        return df
 
     def generate_signals(self, data: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """
@@ -312,6 +371,10 @@ class RSIRevertStrategy(BaseStrategy):
         # 自适应模式下, 滚动窗口不足时也强制 HOLD
         if self.adaptive:
             df.loc[df["low_thr"].isna(), "action"] = "HOLD"
+
+        # D: 换手率高位放量卖出 (15.4 节验证为唯一有效优化)
+        if self.turnover_sell:
+            df = self._apply_turnover_sell(df)
 
         return df[["ts_code", "trade_date", "close", "rsi", "action"]]
 

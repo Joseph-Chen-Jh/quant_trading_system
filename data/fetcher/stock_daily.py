@@ -46,6 +46,24 @@ def _retry(func, name: str, max_retries: int = 3, delay: float = 2.0):
                 raise
 
 
+def _symbol_to_sina(symbol: str) -> str:
+    """纯数字代码 → 新浪格式 (sz000001 / sh600001 / bj830001)
+
+    规则:
+        6 开头 (60xxxx 主板, 68xxxx 科创板) → sh
+        0 / 3 开头 (深主板, 创业板) → sz
+        8 / 4 / 9 开头 (北交所) → bj (新浪可能不支持, 失败后由 TickFlow 兜底)
+    """
+    if not symbol or not symbol[0].isdigit():
+        return symbol  # 已经带前缀或异常, 原样返回让上游报错
+    head = symbol[0]
+    if head == "6":
+        return "sh" + symbol
+    if head in ("0", "3"):
+        return "sz" + symbol
+    return "bj" + symbol
+
+
 def fetch_single_stock(
     symbol: str,
     start_date: str = "20200101",
@@ -53,7 +71,10 @@ def fetch_single_stock(
     adjust: str = "qfq",
 ) -> pd.DataFrame:
     """
-    获取单只股票日线数据
+    获取单只股票日线数据 (新浪源 stock_zh_a_daily)
+
+    说明: 原东方财富 stock_zh_a_hist 的 API 路径在当前网络环境下被 SNI 阻断,
+          故主源切换至新浪。新浪源自带 turnover(换手率) 字段。
 
     Args:
         symbol:   纯数字代码，如 '000001' (不带 .SH/.SZ)
@@ -61,16 +82,22 @@ def fetch_single_stock(
         end_date:   结束日期 YYYYMMDD, 默认今天
         adjust:     'qfq' 前复权 / 'hfq' 后复权 / '' 不复权
     Returns:
-        DataFrame: trade_date, open, high, low, close, volume, amount
+        DataFrame: trade_date, open, high, low, close, volume, amount, turnover
     """
     if end_date is None:
         end_date = datetime.now().strftime("%Y%m%d")
 
+    sina_symbol = _symbol_to_sina(symbol)
+    # 新浪源不复权需传 None, 空字符串会被 akshare 拒绝
+    sina_adjust = adjust if adjust in ("qfq", "hfq") else None
+
     try:
         df = _retry(
-            lambda: ak.stock_zh_a_hist(
-                symbol=symbol, period="daily",
-                start_date=start_date, end_date=end_date, adjust=adjust,
+            lambda: ak.stock_zh_a_daily(
+                symbol=sina_symbol,
+                start_date=start_date,
+                end_date=end_date,
+                adjust=sina_adjust,
             ),
             f"日线 {symbol}",
             max_retries=2,
@@ -82,19 +109,12 @@ def fetch_single_stock(
     if df.empty:
         return df
 
-    df = df.rename(columns={
-        "日期": "trade_date",
-        "开盘": "open",
-        "收盘": "close",
-        "最高": "high",
-        "最低": "low",
-        "成交量": "volume",
-        "成交额": "amount",
-        "振幅": "amplitude",
-        "涨跌幅": "pct_chg",
-        "涨跌额": "change",
-        "换手率": "turnover",
-    })
+    # 新浪源列: date, open, high, low, close, volume, amount, outstanding_share, turnover
+    df = df.rename(columns={"date": "trade_date"})
+    # 丢弃 outstanding_share (流通股本), 不入 daily_price 表
+    drop_cols = [c for c in ("outstanding_share",) if c in df.columns]
+    if drop_cols:
+        df = df.drop(columns=drop_cols)
 
     df["trade_date"] = pd.to_datetime(df["trade_date"]).dt.strftime("%Y%m%d")
     return df

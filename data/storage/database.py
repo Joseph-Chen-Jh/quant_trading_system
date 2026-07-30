@@ -48,7 +48,7 @@ class DataStore:
         保存日线行情
 
         Args:
-            df:     包含 ts_code, trade_date, open, high, low, close, volume, amount
+            df:     包含 ts_code, trade_date, open, high, low, close, volume, amount, turnover
             replace: True=全量覆盖, False=增量 upsert (按 ts_code+trade_date 去重)
         """
         if df.empty:
@@ -60,7 +60,7 @@ class DataStore:
             logger.error(f"缺少必要列: {missing}")
             return
 
-        cols = [c for c in required + ["volume", "amount"] if c in df.columns]
+        cols = [c for c in required + ["volume", "amount", "turnover"] if c in df.columns]
         data = df[cols].copy()
 
         if replace:
@@ -171,6 +171,39 @@ class DataStore:
         if start:
             sql += " AND trade_date >= :start"
             params["start"] = start
+        sql += " ORDER BY ts_code, trade_date"
+        return pd.read_sql(sql, self.engine, params=params)
+
+    # ======================== 筹码分布 ========================
+    def save_chip_distribution(self, df: pd.DataFrame):
+        """保存筹码分布衍生指标 (增量 upsert, 按 ts_code+trade_date 去重)"""
+        if df.empty:
+            return
+        cols = [
+            "ts_code", "trade_date", "profit_ratio", "avg_cost",
+            "cost_90_low", "cost_90_high", "concentration_90",
+            "cost_70_low", "cost_70_high", "concentration_70",
+        ]
+        cols = [c for c in cols if c in df.columns]
+        data = df[cols].copy()
+        _upsert(self.engine, "chip_distribution", data, pk_cols=["ts_code", "trade_date"])
+        logger.info(f"筹码分布数据保存: {len(data)} 行 (增量 upsert)")
+
+    def load_chip_distribution(
+        self, ts_code: str = None, start: str = None, end: str = None
+    ) -> pd.DataFrame:
+        """加载筹码分布数据"""
+        sql = "SELECT * FROM chip_distribution WHERE 1=1"
+        params = {}
+        if ts_code:
+            sql += " AND ts_code = :ts_code"
+            params["ts_code"] = ts_code
+        if start:
+            sql += " AND trade_date >= :start"
+            params["start"] = start
+        if end:
+            sql += " AND trade_date <= :end"
+            params["end"] = end
         sql += " ORDER BY ts_code, trade_date"
         return pd.read_sql(sql, self.engine, params=params)
 
